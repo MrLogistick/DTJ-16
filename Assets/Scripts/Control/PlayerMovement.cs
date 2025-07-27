@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,6 +15,7 @@ public class PlayerMovement : MonoBehaviour
     Vector3 moveDir;
 
     [Header("Air Movement")]
+    [SerializeField] float airMultiplier;
     [SerializeField] float jumpPower;
 
     [SerializeField] float coyoteTime;
@@ -30,6 +32,7 @@ public class PlayerMovement : MonoBehaviour
     Rigidbody rb;
 
     void Start() {
+        GetComponent<PlayerInput>().enabled = true;
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
     }
@@ -50,6 +53,14 @@ public class PlayerMovement : MonoBehaviour
 
         if (IsGrounded()) {
             rb.AddForce(moveDir * moveSpeed * groundMultiplier, ForceMode.Force);
+        } else {
+            rb.AddForce(moveDir * moveSpeed * airMultiplier, ForceMode.Force);
+
+            if (rb.linearVelocity.y < 0f) {
+                Vector3 gravity = rb.linearVelocity;
+                gravity.y *= 1.1f;
+                rb.linearVelocity = gravity;
+            }
         }
 
         Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
@@ -73,7 +84,7 @@ public class PlayerMovement : MonoBehaviour
             yVel = jumpPower;
         }
         if (context.canceled & yVel > 0f) {
-            yVel *= 0.6f;
+            yVel *= 0.5f;
             coyoteElapsed = 0f;
         }
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, yVel, rb.linearVelocity.z);
@@ -84,12 +95,20 @@ public class PlayerMovement : MonoBehaviour
     }
 
     void OnTriggerEnter(Collider other) {
+        if (other.gameObject.CompareTag("Trap")) {
+            other.transform.GetChild(0).gameObject.SetActive(true);
+            Destroy(other);
+        }
+        if (other.gameObject.CompareTag("Finish")) {
+            GameInterface.instance.Finish();
+            GetComponent<PlayerInput>().enabled = false;
+        }
+    }
+
+    void OnCollisionEnter(Collision other) {
         if (other.gameObject.CompareTag("Killer")) {
-            if (other.gameObject.name == "Falling Log") {
-                if (other.transform.parent.GetComponent<FallingLogTrap>().isFalling) {
-                    GameInterface.instance.Die();
-                }
-            }
+            GameInterface.instance.Die();
+            GetComponent<PlayerInput>().enabled = false;
         }
     }
 }

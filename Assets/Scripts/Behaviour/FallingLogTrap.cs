@@ -6,5 +6,6 @@ public class FallingLogTrap : MonoBehaviour
 
     public void Still() {
         isFalling = false;
+        transform.GetChild(0).tag = "Safe";
     }
 }
