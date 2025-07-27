@@ -14,7 +14,6 @@ public class PlayerMovement : MonoBehaviour
     Vector3 moveDir;
 
     [Header("Air Movement")]
-    [SerializeField] float airMultiplier;
     [SerializeField] float jumpPower;
 
     [SerializeField] float coyoteTime;
@@ -51,8 +50,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (IsGrounded()) {
             rb.AddForce(moveDir * moveSpeed * groundMultiplier, ForceMode.Force);
-        } else {
-            rb.AddForce(moveDir * moveSpeed * airMultiplier, ForceMode.Force);
         }
 
         Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
@@ -84,5 +81,15 @@ public class PlayerMovement : MonoBehaviour
 
     bool IsGrounded() {
         return Physics.CheckSphere(groundCheck.position, 0.2f, groundLayer);
+    }
+
+    void OnTriggerEnter(Collider other) {
+        if (other.gameObject.CompareTag("Killer")) {
+            if (other.gameObject.name == "Falling Log") {
+                if (other.transform.parent.GetComponent<FallingLogTrap>().isFalling) {
+                    GameInterface.instance.Die();
+                }
+            }
+        }
     }
 }
